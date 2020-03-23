@@ -1,0 +1,177 @@
+Metadata-Version: 2.0
+Name: requests-hawk
+Version: 1.0.0
+Summary: requests-hawk
+Home-page: https://github.com/mozilla-services/requests-hawk
+Author: Mozilla Services
+Author-email: services-dev@mozilla.org
+License: Apache License (2.0)
+Keywords: authentication token hawk requests
+Platform: UNKNOWN
+Classifier: Intended Audience :: Developers
+Classifier: Programming Language :: Python
+Classifier: License :: OSI Approved :: Apache Software License
+Classifier: Programming Language :: Python :: 2
+Classifier: Programming Language :: Python :: 2.6
+Classifier: Programming Language :: Python :: 2.7
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.4
+Requires-Dist: requests (!=2.8.0)
+Requires-Dist: mohawk
+
+Requests-Hawk
+#############
+
+.. image:: https://travis-ci.org/mozilla-services/requests-hawk.png
+    :target: https://travis-ci.org/mozilla-services/requests-hawk
+
+
+This project allows you to use `the python requests library
+<http://python-requests.org/>`_ with `the hawk authentication
+<https://github.com/hueniverse/hawk>`_ mechanism.
+
+Hawk itself does not provide any mechanism for obtaining or transmitting the
+set of shared credentials required, but this project proposes a scheme we use
+across mozilla services projects.
+
+Great, how can I use it?
+========================
+
+First, you'll need to install it::
+
+  .. code-block:: bash
+
+    pip install requests-hawk
+
+Then, in your project, if you know the `id` and `key`, you can use::
+
+  .. code-block:: python
+
+    import requests
+    from requests_hawk import HawkAuth
+
+    hawk_auth = HawkAuth(id='my-hawk-id', key='my-hawk-secret-key')
+    requests.post("https://example.com/url", auth=hawk_auth)
+
+Or if you need to derive them from the hawk session token, instead use::
+
+  .. code-block:: python
+
+    import requests
+    from requests_hawk import HawkAuth
+
+    hawk_auth = HawkAuth(
+        hawk_session=resp.headers['hawk-session-token'],
+        server_url=self.server_url
+    )
+    requests.post("/url", auth=hawk_auth)
+
+In the second example, the ``server_url`` parameter to ``HawkAuth`` was used to
+provide a default host name, to avoid having to repeat it for each request.
+
+If you wish to override the default algorithm of ``sha256``, pass the desired
+algorithm name using the optional ``algorithm`` parameter.
+
+Note: The ``credentials`` parameter has been removed. Instead pass ``id`` and
+``key`` separately (as above), or pass the existing dict as ``**credentials``.
+
+Integration with httpie
+=======================
+
+`Httpie <https://github.com/jakubroztocil/httpie>`_ is a tool which lets you do
+requests to a distant server in a nice and easy way. Under the hood, ``httpie``
+uses the requests library. We've made it simple for you to plug hawk with it.
+
+If you know the id and key, use it like that::
+
+  .. code-block:: bash
+
+   http POST localhost:5000/registration\
+   --auth-type=hawk --auth='id:key'
+
+Or, if you want to use the hawk session token, you can do as follows::
+
+  .. code-block:: bash
+
+   http POST localhost:5000/registration\
+   --auth-type=hawk --auth='c0d8cd2ec579a3599bef60f060412f01f5dc46f90465f42b5c47467481315f51:'
+
+Take care, don't forget to add the extra ``:`` at the end of the hawk session
+token for it to be considered like so.
+
+How are the shared credentials shared?
+======================================
+
+Okay, on to the actual details.
+
+The server gives you a session token, that you'll need to derive to get the
+hawk credentials.
+
+Do an HKDF derivation on the given session token. You'll need to use the
+following parameters::
+
+  .. code-block:: python
+
+    key_material = HKDF(hawk_session, '', 'identity.mozilla.com/picl/v1/sessionToken', 32*2)
+
+The key material you'll get out of the HKDF needs to be separated into two
+parts, the first 32 hex characters are the ``hawk id``, and the next 32 ones are the
+``hawk key``::
+
+  .. code-block:: python
+
+    credentials = {
+        'id': keyMaterial[0:32]
+        'key': keyMaterial[32:64]
+        'algorithm': 'sha256'
+    }
+
+Run tests
+=========
+
+To run test, you can use tox::
+
+  .. code-block:: bash
+
+    tox
+
+
+CHANGELOG
+=========
+
+1.0.0 (2015-12-15)
+------------------
+
+- Simplified API for using HawkAuth when the id and key are known. (#8)
+- Added support for overriding the default algorithm (sha256) when deriving
+  credentials from the hawk session token, via a new ``algorithm`` parameter.
+
+See the README for migration advice if you use the ``credentials`` parameter.
+
+
+0.2.1 (2015-10-14)
+------------------
+
+- Make sure the requests json parameter is handled properly. (#7)
+
+
+0.2.0 (2015-05-19)
+------------------
+
+- Fix encoding error in setup.py with Python 3.4
+- Add a configuration parameter in order to be able to set the
+  timestamp to use.
+
+
+0.1.2 (2014-08-13)
+------------------
+
+- Add Python3 support
+
+
+0.1.1 (2014-07-21)
+------------------
+
+- First version
+
+

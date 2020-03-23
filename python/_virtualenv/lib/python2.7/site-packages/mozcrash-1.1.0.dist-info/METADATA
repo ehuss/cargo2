@@ -1,0 +1,18 @@
+Metadata-Version: 2.1
+Name: mozcrash
+Version: 1.1.0
+Summary: Library for printing stack traces from minidumps left behind by crashed processes
+Home-page: https://wiki.mozilla.org/Auto-tools/Projects/Mozbase
+Author: Mozilla Automation and Tools team
+Author-email: tools@lists.mozilla.org
+License: MPL
+Keywords: mozilla
+Platform: UNKNOWN
+Classifier: Programming Language :: Python :: 2.7
+Classifier: Programming Language :: Python :: 3.5
+Requires-Dist: mozfile (>=1.0)
+Requires-Dist: mozlog (>=3.0)
+
+see https://firefox-source-docs.mozilla.org/mozbase/index.html
+
+

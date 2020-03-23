@@ -1,0 +1,3 @@
+[httpie.plugins.auth.v1]
+httpie_hawk = requests_hawk:HawkPlugin
+

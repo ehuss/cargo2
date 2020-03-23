@@ -1,0 +1,22 @@
+#
+# Azure Pipelines job to publish toolstate. Only triggers on pushes to master.
+#
+
+pr: none
+trigger:
+  - master
+
+variables:
+- group: prod-credentials
+
+pool:
+  vmImage: ubuntu-16.04
+
+steps:
+- checkout: self
+  fetchDepth: 2
+
+- script: src/ci/publish_toolstate.sh
+  displayName: Publish toolstate
+  env:
+    TOOLSTATE_REPO_ACCESS_TOKEN: $(TOOLSTATE_REPO_ACCESS_TOKEN)
